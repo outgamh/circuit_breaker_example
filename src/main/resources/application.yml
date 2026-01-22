@@ -38,3 +38,15 @@ resilience4j:
         permittedNumberOfCallsInHalfOpenState: 1
         recordExceptions:
           - java.lang.RuntimeException
+
+retry:
+  instances:
+    backendService:
+      maxAttempts: 3
+      waitDuration: 1s
+
+timelimiter:
+  instances:
+    backendService:
+      timeDuration: 2s
+      cancelRunningFuture: true
