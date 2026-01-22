@@ -1,10 +1,10 @@
-package com.example.circuit_breaker;
+package com.example.circuit_breaker_demo;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class CircuitBreakerApplicationTests {
+class CircuitBreakerDemoApplicationTests {
 
 	@Test
 	void contextLoads() {
