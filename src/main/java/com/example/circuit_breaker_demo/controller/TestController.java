@@ -1,6 +1,7 @@
 package com.example.circuit_breaker_demo.controller;
 
 import com.example.circuit_breaker_demo.service.UnstableService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,8 +27,14 @@ public class TestController {
         this.unstableService = unstableService;
     }
 
+//    @GetMapping("/test")
+//    public CompletableFuture<String> test() {
+//        return unstableService.callExternalService();
+//    }
+
     @GetMapping("/test")
-    public CompletableFuture<String> test() {
-        return unstableService.callExternalService();
+    public ResponseEntity<String> test(){
+        String response = unstableService.callExternalService();
+        return ResponseEntity.ok(response);
     }
 }

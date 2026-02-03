@@ -31,8 +31,8 @@ resilience4j:
     instances:
       backendService:
         registerHealthIndicator: true
-        slidingWindowSize: 3
-        minimumNumberOfCalls: 3
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
         permittedNumberOfCallsInHalfOpenState: 1
