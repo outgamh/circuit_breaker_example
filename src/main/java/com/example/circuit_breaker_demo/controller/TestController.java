@@ -1,8 +1,12 @@
 package com.example.circuit_breaker_demo.controller;
 
+import com.example.circuit_breaker_demo.data.DatosValidate;
 import com.example.circuit_breaker_demo.service.UnstableService;
+import com.example.circuit_breaker_demo.service.callExternalApi;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.concurrent.CompletableFuture;
@@ -10,21 +14,22 @@ import java.util.concurrent.CompletableFuture;
 @RestController
 public class TestController {
 
-//    private final UnstableService unstableService;
-//
-//    public TestController(UnstableService unstableService) {
-//        this.unstableService = unstableService;
-//    }
-//
-//    @GetMapping("/test")
-//    public String test() {
-//        return unstableService.callExternalService();
-//    }
+    private final callExternalApi validate;
+    private final callExternalApi login;
+    private final callExternalApi laborReferences;
 
     private final UnstableService unstableService;
 
-    public TestController(UnstableService unstableService) {
+    public TestController(UnstableService unstableService, callExternalApi validate, callExternalApi login, callExternalApi laborReferences) {
         this.unstableService = unstableService;
+        this.validate = validate;
+        this.login = login;
+        this.laborReferences = laborReferences;
+    }
+
+    @PostMapping("/validate")
+    public ResponseEntity<String> validatePreLogin(@RequestBody DatosValidate datosValidate){
+        return ResponseEntity.ok(validate.validatePreLogin(datosValidate));
     }
 
 //    @GetMapping("/test")
@@ -32,9 +37,4 @@ public class TestController {
 //        return unstableService.callExternalService();
 //    }
 
-    @GetMapping("/test")
-    public ResponseEntity<String> test(){
-        String response = unstableService.callExternalService();
-        return ResponseEntity.ok(response);
-    }
 }
