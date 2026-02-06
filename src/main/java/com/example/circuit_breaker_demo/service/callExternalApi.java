@@ -72,4 +72,28 @@ public class callExternalApi {
 
         return authorizationHeader;
     }
+
+    public String laborReferences(HttpSession session)
+    {
+        String url = "http://10.160.209.146:9084/CWCREST/services/resources/cobis/api/ref_laboral/customers/48/labor-references";
+
+        String token = (String)session.getAttribute("TOKEN");
+
+        if (token == null){
+            throw new RuntimeException("No existe token");
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", token);
+
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                String.class
+        );
+        return response.getBody();
+    }
 }

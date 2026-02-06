@@ -39,6 +39,13 @@ public class TestController {
         return ResponseEntity.ok(login.Login(datosLogin, session));
     }
 
+    @GetMapping("/laborReferences")
+    public ResponseEntity<String> laborReferences(HttpSession session){
+        String resp = laborReferences.laborReferences(session);
+
+        return ResponseEntity.ok(resp);
+    }
+
 //    @GetMapping("/test")
 //    public CompletableFuture<String> test() {
 //        return unstableService.callExternalService();
