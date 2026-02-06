@@ -20,6 +20,7 @@ public class callExternalApi {
 
         String url = "http://10.160.209.146:9084/CWCREST/services/resources/cobis/cwc/credentials/public/validate";
 
+
         HttpEntity<DatosValidate> entity = new HttpEntity<DatosValidate>(datosValidate);
 
         ResponseEntity<String> response = restTemplate.exchange(

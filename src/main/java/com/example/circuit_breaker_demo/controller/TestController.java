@@ -42,7 +42,6 @@ public class TestController {
     @GetMapping("/laborReferences")
     public ResponseEntity<String> laborReferences(HttpSession session){
         String resp = laborReferences.laborReferences(session);
-
         return ResponseEntity.ok(resp);
     }
 

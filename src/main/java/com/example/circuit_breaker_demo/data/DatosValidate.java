@@ -2,11 +2,11 @@ package com.example.circuit_breaker_demo.data;
 
 public class DatosValidate {
 
-    private String pass;
+    private String password;
 
-    public void setPass(String pass){this.pass = pass;}
+    public void setPassword(String password){this.password = password;}
 
-    public String getPass(){return pass;}
+    public String getPassword(){return password;}
 
     private String login;
 
