@@ -1,0 +1,180 @@
+plugins {
+    id 'base'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.owasp.dependencycheck' version '12.2.0'
+    id 'jacoco'
+    id 'org.sonarqube' version '5.0.0.4638'
+}
+
+group = 'com.banrural.bdr.integracion.ms.customer.core.adapter'
+version = '1.0.0'
+description = 'bdr-ms-customer-core-adapter'
+
+allprojects {
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+}
+
+def nvdApiKey = System.getenv('NVD_API_KEY')
+def autoUpdateProp = (System.getProperty('odcAutoUpdate') ?: 'true').toBoolean()
+def dependencyCheckDataDir = "C:/dependency-check-data"
+
+dependencyCheck {
+    formats = ['HTML', 'JSON']
+    outputDirectory = rootProject.layout.buildDirectory.dir('reports/dependency-check').get().asFile
+    failBuildOnCVSS = 1.0
+    autoUpdate = autoUpdateProp
+
+    data {
+        directory = dependencyCheckDataDir
+    }
+
+    nvd {
+        apiKey = nvdApiKey
+        delay = nvdApiKey ? 3500 : 8000
+        maxRetryCount = 10
+        validForHours = 24
+    }
+}
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'jacoco'
+
+    dependencyManagement {
+        imports {
+            mavenBom 'org.springframework.boot:spring-boot-dependencies:4.0.3'
+            mavenBom 'org.springframework.cloud:spring-cloud-dependencies:2025.1.1'
+            mavenBom 'io.awspring.cloud:spring-cloud-aws-dependencies:4.0.0'
+            mavenBom 'software.amazon.awssdk:bom:2.42.1'
+        }
+    }
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+
+    configurations {
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+        all {
+            exclude group: 'commons-fileupload', module: 'commons-fileupload'
+            exclude group: 'org.assertj', module: 'assertj-core'
+            
+            resolutionStrategy {
+                // Forzar versión segura de commons-compress para mitigar CVE-2024-25710
+                force 'org.apache.commons:commons-compress:1.26.0'
+            }
+        }
+    }
+
+    dependencies {
+        compileOnly 'org.projectlombok:lombok'
+        annotationProcessor 'org.projectlombok:lombok'
+
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+        testImplementation 'org.mockito:mockito-core'
+        testImplementation 'org.mockito:mockito-junit-jupiter'
+    }
+
+    tasks.named('test') {
+        useJUnitPlatform()
+    }
+
+    plugins.withId('jacoco') {
+        jacocoTestReport {
+            dependsOn test
+            reports {
+                xml.required = true
+                html.required = true
+            }
+        }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs += [
+                "-parameters",
+                "-Amapstruct.defaultComponentModel=spring",
+                "-Amapstruct.unmappedTargetPolicy=IGNORE"
+        ]
+    }
+
+
+    project.afterEvaluate {
+        if (project.path != ':infrastructure' && tasks.findByName('bootJar')) {
+            tasks.named('bootJar') {
+                enabled = false
+            }
+        }
+    }
+}
+
+def coveredProjects = [
+    ':domain',
+    ':application',
+    ':infrastructure:aspect',
+    ':infrastructure:driven-adapter:auth',
+    ':infrastructure:driven-adapter:cache',
+    ':infrastructure:driven-adapter:feign',
+    ':infrastructure:driven-adapter:metrics',
+    ':infrastructure:entry-point:rest'
+].collect { project(it) }
+
+def excludedClasses = [
+    '**/MsAdapterApplication.class',
+    '**/config/**',
+    '**/dto/**',
+    '**/entity/**',
+    '**/mapper/**',
+    '**/handler/**',
+    '**/health/**',
+    '**/client/**',
+    '**/RestTemplateConfig.class',
+    '**/ApplicationConfig.class'
+]
+
+tasks.register('jacocoAggregatedReport', JacocoReport) {
+    dependsOn coveredProjects.collect { it.tasks.named('test') }
+
+    reports {
+        xml.required = true
+        html.required = true
+    }
+
+    executionData.setFrom(
+        files(coveredProjects.collect {
+            it.tasks.test.extensions.getByType(JacocoTaskExtension).destinationFile
+        }).filter { it.exists() }
+    )
+
+    additionalSourceDirs.setFrom(files(coveredProjects.collect { it.sourceSets.main.allSource.srcDirs }))
+
+    classDirectories.setFrom(files(coveredProjects.collect { it.sourceSets.main.output }).asFileTree.matching {
+        exclude excludedClasses
+    })
+}
+
+
+tasks.named('build') {
+    dependsOn jacocoAggregatedReport
+}
+
+sonarqube {
+    properties {
+        property 'sonar.projectKey', 'ms-adapter'
+        property 'sonar.host.url', 'http://localhost:9000'
+        property 'sonar.scm.disabled', 'true'
+        property 'sonar.exclusions', excludedClasses
+            .collect { it.replace('.class', '.java').replace('**/', '') }
+            .join(',')
+        property 'sonar.coverage.jacoco.xmlReportPaths',
+            layout.buildDirectory.file('reports/jacoco/jacocoAggregatedReport/jacocoAggregatedReport.xml').get().asFile.absolutePath
+    }
+}

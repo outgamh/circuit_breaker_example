@@ -1,0 +1,38 @@
+
+trigger:
+  branches:
+    include:
+      - main
+      - staging
+      - release
+      - develop
+      - feature/*
+
+
+pr:
+  branches:
+    include:
+      - main
+      - staging
+      - release
+      - develop
+
+
+resources:
+  repositories:
+    - repository: azd-bdr-devops-transv-pipeline-ref
+      type: git
+      name: azd-bdr-proy-devops-hub/azd-bdr-devops-transv-pipeline-ref
+      ref: trunk
+
+
+extends:
+  template: master.yml@azd-bdr-devops-transv-pipeline-ref
+  parameters:
+    type: 'ms'
+    technology: 'java'
+    deployTarget: 'ecr'
+    javaVersion: '21'
+    gradleVersion: '4'
+    aws_svc: '$(aws_svc)'
+
